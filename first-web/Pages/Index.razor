@@ -1,0 +1,19 @@
+﻿@page "/"
+@inject first_web.Service.AuthService AuthService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Index</PageTitle>
+
+<h1 style="margin-bottom: 20px;">Hello, @AuthService.GetEmail()!</h1>
+
+<p> Welcome to Todo App. </p>
+
+<button class="btn btn-primary" @onclick="Logout">Logout</button>
+
+@code {
+    private void Logout()
+    {
+        AuthService.Logout();
+        NavigationManager.NavigateTo("/login");
+    }
+}

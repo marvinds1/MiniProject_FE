@@ -1,0 +1,25 @@
+﻿@inherits LayoutComponentBase
+@inject first_web.Service.AuthService AuthService
+@inject NavigationManager NavigationManager
+
+<PageTitle>first-web</PageTitle>
+
+@if (!IsLoginPage())
+{
+    <div>
+        @Body
+    </div>
+}
+else
+{
+    <div>
+        @Body
+    </div>
+}
+
+@code {
+    private bool IsLoginPage()
+    {
+        return NavigationManager.Uri.EndsWith("/login", StringComparison.OrdinalIgnoreCase);
+    }
+}

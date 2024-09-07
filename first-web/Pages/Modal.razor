@@ -1,0 +1,28 @@
+﻿@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public string Title { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [CascadingParameter] private Blazorise.Modal Modal { get; set; }
+
+    private void Close()
+    {
+        OnClose.InvokeAsync();
+    }
+}
+
+<div class="modal @((Visible ? "show" : ""))" style="display: @(Visible ? "block" : "none")" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@Title</h5>
+                <button type="button" class="close" @onclick="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                @Body
+            </div>
+            <div class="modal-footer">
+                @Footer
+            </div>
+        </div>
+    </div>
+</div>

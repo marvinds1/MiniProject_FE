@@ -1,0 +1,61 @@
+﻿@inject NavigationManager NavigationManager
+@inject first_web.Service.AuthService AuthService
+
+<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        @if (AuthService.IsAuthenticated())
+        {
+            <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        }
+        else
+        {
+            var currentPath = NavigationManager.ToAbsoluteUri(NavigationManager.Uri).AbsolutePath;
+
+            if (currentPath != "/login")
+            {
+                try
+                {
+                    NavigationManager.NavigateTo("/login", true);
+                }
+                catch (NavigationException)
+                {
+                }
+            }
+            else
+            {
+                <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+            }
+        }
+    </Found>
+    <NotFound>
+        <PageTitle>Not found</PageTitle>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <p role="alert">Sorry, there's nothing at this address.</p>
+        </LayoutView>
+    </NotFound>
+</Router>
+
+@code {
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (!AuthService.IsAuthenticated())
+            {
+                var currentPath = NavigationManager.ToAbsoluteUri(NavigationManager.Uri).AbsolutePath;
+
+                if (currentPath != "/login")
+                {
+                    try
+                    {
+                        NavigationManager.NavigateTo("/login", true);
+                    }
+                    catch (NavigationException)
+                    {
+                    }
+                }
+            }
+        }
+    }
+}

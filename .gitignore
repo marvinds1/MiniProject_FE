@@ -1,0 +1,78 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+msbuild.log
+msbuild.err
+msbuild.wrn
+
+# NuGet Packages
+*.nupkg
+**/packages/*
+!**/packages/build/
+!**/packages/repositories.config
+!**/packages/**/build/*.props
+!**/packages/**/build/*.targets
+
+# Compiled client-side assets
+wwwroot/dist/
+wwwroot/node_modules/
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Angular
+.angular/
+
+# Compiled output
+dist/
+tmp/
+out-tsc/
+bazel-out/
+
+# Sass
+.sass-cache/
+*.css.map
+*.sass.map
+*.scss.map
+
+# Environment variables
+.env
+.env.*
+
+# IDE-specific files
+.idea/
+*.sublime-project
+*.sublime-workspace
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# User-specific files
+*.db
+*.log
+*.swp
+*.tmp
+
+# Miscellaneous
+.DS_Store
+Thumbs.db

@@ -1,0 +1,89 @@
+﻿@page "/todos/edit/{id:int}"
+@using first_web.Model
+@inject first_web.Service.TodoService TodoService
+
+<h3>@(todo?.TodoId == null ? "Create Todo" : "Edit Todo")</h3>
+
+@if (isLoading)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="form-group">
+        <label for="todoNote">Todo Note</label>
+        <input id="todoNote" @bind="todo.Note" placeholder="Enter todo note" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label for="todoDay">Select a Day</label>
+        <select id="todoDay" @bind="todo.Day" class="form-control mt-2">
+            <option value="" disabled selected>Select a day</option>
+            <option value="Monday">Monday</option>
+            <option value="Tuesday">Tuesday</option>
+            <option value="Wednesday">Wednesday</option>
+            <option value="Thursday">Thursday</option>
+            <option value="Friday">Friday</option>
+            <option value="Saturday">Saturday</option>
+            <option value="Sunday">Sunday</option>
+        </select>
+    </div>
+
+    <button class="btn btn-primary mt-2" @onclick="SaveTodo">Save</button>
+    <button class="btn btn-secondary mt-2" @onclick="Close">Cancel</button>
+}
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+
+    [Parameter]
+    public Todo Todo { get; set; }
+
+    [Parameter]
+    public EventCallback<Todo> OnTodoChanged { get; set; }
+
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    private Todo todo;
+    private bool isLoading = false;
+
+    protected override void OnParametersSet()
+    {
+        todo = Todo?.Clone();
+    }
+
+    private async Task SaveTodo()
+    {
+        isLoading = true;
+        try
+        {
+            if (todo.TodoId == null)
+            {
+                await TodoService.CreateTodoAsync(todo);
+            }
+            else
+            {
+                await TodoService.UpdateTodoAsync(todo);
+            }
+
+
+            await OnTodoChanged.InvokeAsync(todo);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving todo: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false; 
+            await OnClose.InvokeAsync();
+        }
+    }
+
+    private async Task Close()
+    {
+        await OnClose.InvokeAsync();
+    }
+}

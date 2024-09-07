@@ -1,0 +1,134 @@
+﻿@page "/todo"
+@* Import Blazor Bootstrap if using it *@
+@* <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" /> *@
+
+<div class="container h-100">
+    <div class="row justify-content-center h-100">
+        <div class="col-xxl-6 col-xl-7 col-lg-8 col-md-9 col-sm-11">
+            <div class="text-center my-5">
+                <img src="../asset/icon.png" alt="logo" width="120" />
+            </div>
+            <div class="text-center my-5">
+                <h1 class="fs-2 fw-bold">TODO AFWAN</h1>
+            </div>
+            <div class="card shadow-lg">
+                <div class="card-body p-5">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <span class="fw-bolder">Add New ToDo</span>
+                        <button class="btn btn-primary" @onclick="ShowAddTaskModal">Add New</button>
+                    </div>
+
+                    @if (isModalVisible)
+                    {
+                        <EditForm Model="@taskModel" OnValidSubmit="AddTask">
+                            <Modal @bind-Visible="isModalVisible" Title="ADD NEW TODO" @ref="modal">
+                                <DataAnnotationsValidator />
+                                <ValidationSummary />
+                                <div class="mb-3">
+                                    <label for="textInput" class="form-label">Day</label>
+                                    <InputText id="textInput" class="form-control" @bind-Value="taskModel.Day" />
+                                    <ValidationMessage For="@(() => taskModel.Day)" />
+                                </div>
+                                <div class="mb-3">
+                                    <label for="note" class="form-label">Note</label>
+                                    <InputTextArea id="note" class="form-control" @bind-Value="taskModel.Note" />
+                                    <ValidationMessage For="@(() => taskModel.Note)" />
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Close</button>
+                                    <button type="submit" class="btn btn-primary" disabled="@(!IsFormValid())">Add</button>
+                                </div>
+                            </Modal>
+                        </EditForm>
+                    }
+
+                    <h4 class="text-center fw-bold my-5">MY TASKS</h4>
+                    <div id="tasks">
+                        @if (tasks.Any())
+                        {
+                            foreach (var task in tasks)
+                            {
+                                <div class="mb-3">
+                                    <span class="fw-bolder">@task.Day</span>
+                                    <p class="fw-bold">@task.Note</p>
+                                    <span class="options">
+                                        <button class="btn btn-warning" @onclick="() => EditTask(task)">Edit</button>
+                                        <button class="btn btn-danger" @onclick="() => DeleteTask(task)">Delete</button>
+                                    </span>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <a href="login" class="btn btn-secondary ms-auto mt-5">Log Out</a>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center mt-5 text-muted">
+                Copyright &copy; 2024 &mdash; Latihan FrontEnd
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private TaskModel taskModel = new TaskModel();
+    private List<TaskModel> tasks = new List<TaskModel>();
+    private bool isModalVisible = false;
+    private Modal modal;
+
+    private void ShowAddTaskModal()
+    {
+        // Reset the form when opening the modal for adding new tasks
+        taskModel = new TaskModel();
+        isModalVisible = true;
+    }
+
+    private void CloseModal()
+    {
+        isModalVisible = false;
+    }
+
+    private void AddTask()
+    {
+        tasks.Add(new TaskModel
+        {
+            Day = taskModel.Day,
+            Note = taskModel.Note
+        });
+
+        taskModel = new TaskModel(); // Reset the form
+        CloseModal();
+    }
+
+    private void EditTask(TaskModel task)
+    {
+        // Use a shallow copy to prevent modifying the original task reference
+        taskModel = new TaskModel
+        {
+            Day = task.Day,
+            Note = task.Note
+        };
+        ShowAddTaskModal();
+    }
+
+    private void DeleteTask(TaskModel task)
+    {
+        tasks.Remove(task);
+    }
+
+    private bool IsFormValid()
+    {
+        return !string.IsNullOrWhiteSpace(taskModel.Day) && !string.IsNullOrWhiteSpace(taskModel.Note);
+    }
+
+    public class TaskModel
+    {
+        [Required(ErrorMessage = "Please enter the day.")]
+        public string Day { get; set; }
+
+        [Required(ErrorMessage = "Please enter a note.")]
+        public string Note { get; set; }
+    }
+}

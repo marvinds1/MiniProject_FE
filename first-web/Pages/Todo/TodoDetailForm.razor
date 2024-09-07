@@ -1,0 +1,34 @@
+﻿@using first_web.Model
+
+<div>
+    <div class="form-group">
+        <label for="activity">Activity</label>
+        <input type="text" id="activity" class="form-control" @bind="TodoDetail.Activity" />
+    </div>
+    <div class="form-group">
+        <label for="category">Category</label>
+        <input type="text" id="category" class="form-control" @bind="TodoDetail.Category" />
+    </div>
+    <div class="form-group">
+        <label for="detailNote">Detail Note</label>
+        <textarea id="detailNote" class="form-control" @bind="TodoDetail.DetailNote"></textarea>
+    </div>
+    <input type="hidden" @bind="TodoDetail.TodoId" /> <!-- Hidden field for TodoId -->
+    <button class="btn btn-primary" @onclick="Save">Save</button>
+</div>
+
+@code {
+    [Parameter]
+    public TodoDetail TodoDetail { get; set; }
+
+    [Parameter]
+    public EventCallback<TodoDetail> OnTodoDetailChanged { get; set; }
+
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    private async Task Save()
+    {
+        await OnTodoDetailChanged.InvokeAsync(TodoDetail);
+    }
+}

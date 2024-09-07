@@ -1,0 +1,276 @@
+﻿@page "/todos"
+@using first_web.Model
+@inject first_web.Service.TodoService TodoService
+@inject first_web.Service.TodoDetailService TodoDetailService
+@using System.Text.Json
+
+<h3>Todo List</h3>
+
+<button class="btn btn-primary" @onclick="ShowCreateTodoModal">Add Todo</button>
+
+@if (todos == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <ul class="list-group mt-3">
+        @foreach (var todo in todos)
+        {
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>@todo.Note</strong><br />
+                    <small>Date: @todo.TodayDate.ToString("yyyy-MM-dd")</small><br />
+                    <small>Details Count: @todo.DetailCount</small>
+                </div>
+                <div>
+                    <button class="btn btn-secondary btn-sm me-2" @onclick="() => EditTodo(todo.TodoId)">Edit</button>
+                    <button class="btn btn-danger btn-sm me-2" @onclick="() => DeleteTodo(todo.TodoId)" disabled="@isDeleting">Delete</button>
+                    @if (isDeleting && selectedTodo?.TodoId == todo.TodoId)
+                    {
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    }
+                    <button class="btn btn-info btn-sm" @onclick="() => ToggleDetails(todo)">
+                        @(expandedDetails.Contains(todo.TodoId) ? "Hide Details" : "Show Details")
+                    </button>
+                </div>
+            </li>
+            @if (expandedDetails.Contains(todo.TodoId))
+            {
+                <div class="mt-2" style="border: 1px solid #6f42c1; border-radius: 5px; padding: 10px; background-color: #e6d8f0;">
+                    @if (todo.TodoDetails == null || !todo.TodoDetails.Any())
+                    {
+                        <p>No details available for this Todo. <strong>Consider adding a new TodoDetail!</strong></p>
+                        <button class="btn btn-success btn-sm" @onclick="() => ShowAddTodoDetailModal(todo)">Add TodoDetail</button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-success btn-sm mb-2" @onclick="() => ShowAddTodoDetailModal(todo)">Add TodoDetail</button>
+                        <ul class="list-group">
+                            @foreach (var detail in todo.TodoDetails)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>Activity:</strong> @detail.Activity<br />
+                                        <strong>Category:</strong> @detail.Category<br />
+                                        <strong>Note:</strong> @detail.DetailNote
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-warning btn-sm me-2" @onclick="() => ShowEditTodoDetailModal(detail)">Edit</button>
+                                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteTodoDetail(detail.TodoDetailId, todo)">Delete</button>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            }
+        }
+    </ul>
+}
+
+@if (showModal)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 600px; width: auto;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@((selectedTodo.TodoId == null) ? "Create Todo" : "Edit Todo")</h5>
+                    <button type="button" class="close" @onclick="CloseModal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <TodoForm Todo="selectedTodo" OnTodoChanged="@((todo) => OnTodoChanged(todo))" OnClose="@CloseModal" />
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (showDataNotFoundModal)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 400px; width: auto;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">No TodoDetails</h5>
+                    <button type="button" class="close" @onclick="CloseDataNotFoundModal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>No details available for this Todo.</p>
+                    <button class="btn btn-success btn-sm" @onclick="() => ShowAddTodoDetailModal(selectedTodo)">Add TodoDetail</button>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseDataNotFoundModal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (showTodoDetailModal)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 600px; width: auto;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@((isEditing) ? "Edit TodoDetail" : "Add TodoDetail")</h5>
+                    <button type="button" class="close" @onclick="CloseTodoDetailModal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    @if (isLoading)
+                    {
+                        <div class="text-center">
+                            <span class="spinner-border spinner-border-lg" role="status" aria-hidden="true"></span>
+                            <p>Loading...</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <TodoDetailForm TodoDetail="selectedTodoDetail" OnTodoDetailChanged="@((todoDetail) => OnTodoDetailChanged(todoDetail))" OnClose="@CloseTodoDetailModal" />
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Todo> todos;
+    private Todo selectedTodo = new Todo();
+    private TodoDetail selectedTodoDetail = new TodoDetail();
+    private bool showModal = false;
+    private bool isDeleting = false;
+    private bool showDataNotFoundModal = false;
+    private bool showTodoDetailModal = false;
+    private bool isEditing = false;
+    private bool isLoading = false; // Loading indicator
+    private HashSet<string> expandedDetails = new HashSet<string>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTodos();
+    }
+
+    private async Task LoadTodos()
+    {
+        todos = await TodoService.GetTodosAsync();
+        UpdateDetailCounts(); // Update detail counts after loading todos
+    }
+
+    private void UpdateDetailCounts()
+    {
+        foreach (var todo in todos)
+        {
+            todo.DetailCount = todo.TodoDetails?.Count ?? 0; // Update the DetailCount
+        }
+    }
+
+    private void ShowCreateTodoModal()
+    {
+        selectedTodo = new Todo();
+        showModal = true;
+    }
+
+    private void EditTodo(string id)
+    {
+        selectedTodo = todos.FirstOrDefault(t => t.TodoId == id);
+        showModal = true;
+    }
+
+    private async Task DeleteTodo(string id)
+    {
+        isDeleting = true;
+        selectedTodo = todos.FirstOrDefault(t => t.TodoId == id);
+
+        await TodoService.DeleteTodoAsync(id);
+        await LoadTodos();
+        isDeleting = false;
+    }
+
+    private async Task CloseModal()
+    {
+        showModal = false;
+        await LoadTodos();
+    }
+
+    private async Task OnTodoChanged(Todo todo)
+    {
+        selectedTodo = todo;
+    }
+
+    private void ToggleDetails(Todo todo)
+    {
+        if (todo.TodoDetails == null || !todo.TodoDetails.Any())
+        {
+            selectedTodo = todo; // Store the selected todo
+            showDataNotFoundModal = true; // Show the "No TodoDetails" modal
+        }
+        else
+        {
+            if (expandedDetails.Contains(todo.TodoId))
+            {
+                expandedDetails.Remove(todo.TodoId);
+            }
+            else
+            {
+                expandedDetails.Add(todo.TodoId);
+            }
+        }
+    }
+
+    private void ShowAddTodoDetailModal(Todo todo)
+    {
+        showDataNotFoundModal = false;
+        selectedTodoDetail = new TodoDetail { TodoId = todo.TodoId }; // Set TodoId for new entry
+        isEditing = false; // Set to false for adding
+        showTodoDetailModal = true; // Show modal
+    }
+
+    private void ShowEditTodoDetailModal(TodoDetail detail)
+    {
+        selectedTodoDetail = detail; // Set selected detail for editing
+        isEditing = true; // Set to true for editing
+        showTodoDetailModal = true; // Show modal
+    }
+
+    private async Task OnTodoDetailChanged(TodoDetail todoDetail)
+    {
+        isLoading = true; // Show loading indicator
+        if (isEditing)
+        {
+            await TodoDetailService.UpdateTodoDetailAsync(todoDetail);
+        }
+        else
+        {
+            await TodoDetailService.CreateTodoDetailAsync(todoDetail);
+        }
+        await LoadTodos(); // Reload todos to reflect changes
+        isLoading = false; // Hide loading indicator
+        CloseTodoDetailModal();
+    }
+
+    private async Task DeleteTodoDetail(string todoDetailId, Todo todo)
+    {
+        await TodoDetailService.DeleteTodoDetailAsync(todoDetailId);
+        // Update the DetailCount after deletion
+        todo.TodoDetails.Remove(todo.TodoDetails.FirstOrDefault(td => td.TodoDetailId == todoDetailId));
+        todo.DetailCount = todo.TodoDetails.Count; // Update the count
+        await LoadTodos(); // Reload todos to reflect changes
+    }
+
+    private void CloseTodoDetailModal()
+    {
+        showTodoDetailModal = false;
+    }
+
+    private void CloseDataNotFoundModal()
+    {
+        showDataNotFoundModal = false;
+    }
+}
